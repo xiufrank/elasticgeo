@@ -1147,7 +1147,7 @@ class FilterToElastic implements FilterVisitor, ExpressionVisitor {
             currentGeometry = factory.createLineString(coordinates);
         }
 
-        final String geoJson = new GeometryJSON().toString(currentGeometry);
+        final String geoJson = new GeometryJSON(8).toString(currentGeometry);
         currentShapeBuilder = mapReader.readValue(geoJson);
     }
 
