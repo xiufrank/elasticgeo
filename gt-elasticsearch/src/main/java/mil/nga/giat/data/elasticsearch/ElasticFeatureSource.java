@@ -187,14 +187,7 @@ class ElasticFeatureSource extends ContentFeatureSource {
         }
         final Map<String,Object> queryBuilder = filterToElastic.getQueryBuilder();
 
-        final Map<String,Object> nativeQueryBuilder = filterToElastic.getNativeQueryBuilder();
-
         searchRequest.setQuery(queryBuilder);
-
-        if (isSort(query) && nativeQueryBuilder.equals(ElasticConstants.MATCH_ALL)) {
-            final String sortKey = dataStore.getClient().getVersion() < 7 ? "_uid" : "_id";
-            searchRequest.addSort(sortKey, naturalSortOrder);
-        }
 
         if (filterToElastic.getAggregations() != null) {
             final Map<String, Map<String, Map<String, Object>>> aggregations = filterToElastic.getAggregations();
