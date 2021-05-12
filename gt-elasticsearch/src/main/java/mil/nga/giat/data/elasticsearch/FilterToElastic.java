@@ -122,7 +122,7 @@ import mil.nga.giat.shaded.joda.time.format.DateTimeFormatter;
  * 
  * Based on org.geotools.data.jdbc.FilterToSQL in the GeoTools library/jdbc module.
  */
-class FilterToElastic implements FilterVisitor, ExpressionVisitor {
+public class FilterToElastic implements FilterVisitor, ExpressionVisitor {
 
     /** Standard java logger */
     static final Logger LOGGER = Logging.getLogger(FilterToElastic.class);
