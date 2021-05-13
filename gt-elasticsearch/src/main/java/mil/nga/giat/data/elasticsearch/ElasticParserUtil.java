@@ -286,14 +286,20 @@ class ElasticParserUtil {
 
         final double x;
         final double y;
+        final double z;
         if (Number.class.isAssignableFrom(posList.get(0).getClass())) {
             x = ((Number) posList.get(0)).doubleValue();
             y = ((Number) posList.get(1)).doubleValue();
+            z = posList.size() == 3 ? ((Number) posList.get(2)).doubleValue() : 0;
         } else {
             x = Double.valueOf(posList.get(0).toString());
             y = Double.valueOf(posList.get(1).toString());
+            z = posList.size() == 3 ? Double.valueOf(posList.get(2).toString()) : 0;
         }
-        return new Coordinate(x, y);
+
+        return posList.size() == 3
+                ? new Coordinate(x, y, z)
+                : new Coordinate(x, y);
     }
 
     /**
