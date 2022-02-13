@@ -208,6 +208,15 @@ public class ElasticDataStoreFactory implements DataStoreFactorySpi {
         dataStore.setArrayEncoding(ArrayEncoding.valueOf(arrayEncoding.toUpperCase()));
         dataStore.setGridSize((Long) GRID_SIZE.lookUp(params));
         dataStore.setGridThreshold((Double) GRID_THRESHOLD.lookUp(params));
+        dataStore.setRebuildRestClient(()-> {
+            try {
+                final String user = getValue(USER, params);
+                final String passwd = getValue(PASSWD, params);
+                return createRestClient(params, user, passwd);
+            } catch (IOException e) {
+                return null;
+            }
+        });
         return dataStore;
     }
 
