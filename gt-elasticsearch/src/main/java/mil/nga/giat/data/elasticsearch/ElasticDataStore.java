@@ -84,10 +84,8 @@ public class ElasticDataStore extends ContentDataStore {
         CSV
     }
 
-    private Supplier<RestClient> rebuildRestClient;
-
     public void setRebuildRestClient(Supplier<RestClient> rebuildRestClient) {
-        this.rebuildRestClient = rebuildRestClient;
+        ((RestElasticClient)this.client).setRebuildRestClient(rebuildRestClient);
     }
 
     public ElasticDataStore(String searchHost, Integer hostPort, String indexName) throws IOException {
@@ -208,45 +206,7 @@ public class ElasticDataStore extends ContentDataStore {
     }
 
     ElasticClient getClient() {
-        if(client instanceof RestElasticClient){
-            RestElasticClient restElasticClient = (RestElasticClient) client;
-            RestClient restClientRefection = getRestClientRefection(restElasticClient);
-
-            boolean asyncClientRunning = isAsyncClientRunning(restClientRefection);
-            if(!asyncClientRunning){
-                if(rebuildRestClient != null){
-                    RestClient restClient = rebuildRestClient.get();
-                    if(restClient != null){
-                        client = new RestElasticClient(restClient, null, false);
-                    }
-                }
-            }
-        }
         return client;
-    }
-
-    private RestClient getRestClientRefection(RestElasticClient elasticClient){
-        try {
-            Field client = RestElasticClient.class.getDeclaredField("client");
-            client.setAccessible(true);
-            return (RestClient) client.get(elasticClient);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private boolean isAsyncClientRunning(RestClient restClient){
-        try {
-            Field client = RestClient.class.getDeclaredField("client");
-            client.setAccessible(true);
-            CloseableHttpAsyncClient asyncClient = (CloseableHttpAsyncClient) client.get(restClient);
-
-            Method isRunning = CloseableHttpAsyncClient.class.getDeclaredMethod("isRunning");
-            isRunning.setAccessible(true);
-            return (boolean) isRunning.invoke(asyncClient);
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     boolean isSourceFilteringEnabled() {
