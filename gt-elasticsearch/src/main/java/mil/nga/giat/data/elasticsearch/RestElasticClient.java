@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 
 import mil.nga.giat.data.elasticsearch.ElasticMappings.Mapping;
 
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -49,7 +51,8 @@ public class RestElasticClient implements ElasticClient {
 
     private final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-    private final RestClient client;
+    private RestClient client;
+    private Supplier<RestClient> rebuildRestClient;
 
     private final RestClient proxyClient;
 
@@ -268,7 +271,45 @@ public class RestElasticClient implements ElasticClient {
     }
 
     Response performRequest(String method, String path, Map<String,Object> requestBody) throws IOException {
-        return performRequest(method, path, requestBody, false);
+        try {
+            return performRequest(method, path, requestBody, false);
+        } catch (Exception ex){
+            if(connectionException(ex)){
+                LOGGER.log(Level.SEVERE, "found connection is closed :"+ ex.getMessage() +", rebuild rest client.");
+                RestClient restClient = rebuildRestClient();
+                if(restClient != null){
+                    this.client = restClient;
+                    return performRequest(method, path, requestBody, false);
+                } else {
+                    LOGGER.log(Level.SEVERE, "found connection is closed, rebuild rest client is null");
+                    throw ex;
+                }
+            }
+            throw ex;
+        }
+    }
+
+    private RestClient rebuildRestClient(){
+        if(rebuildRestClient != null){
+            return rebuildRestClient.get();
+        } else {
+            LOGGER.log(Level.SEVERE, "found connection is closed, rebuildRestClient does not defined.");
+        }
+        return null;
+    }
+
+    private boolean connectionException(Exception e){
+        for(Throwable throwable = e.getCause(); throwable != null; throwable = throwable.getCause()){
+            if(throwable instanceof ConnectionClosedException
+                    || throwable instanceof IllegalStateException){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void setRebuildRestClient(Supplier<RestClient> rebuildRestClient) {
+        this.rebuildRestClient = rebuildRestClient;
     }
 
     private ElasticResponse parseResponse(final Response response) throws IOException {
